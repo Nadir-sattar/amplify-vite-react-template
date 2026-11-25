@@ -16,6 +16,7 @@ function App() {
   const [telemetry, setTelemetry] = useState<Telemetry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const { signOut } = useAuthenticator();
 
@@ -38,6 +39,8 @@ function App() {
               (item): item is Telemetry => item !== null
             )
           );
+
+          setLastUpdated(new Date());
           setError("");
         }
       } catch (err) {
@@ -61,42 +64,71 @@ function App() {
   }, []);
 
   const latest = telemetry[0];
-
-  const motionEvents = telemetry.filter(
-    (item) => item.motion
-  ).length;
-
-  const lastMotion = telemetry.find(
-    (item) => item.motion
-  );
+  const detections = telemetry.filter((item) => item.motion);
+  const lastMotion = detections[0];
 
   function formatTime(timestamp: string) {
     return new Date(Number(timestamp) * 1000)
-      .toLocaleString("sv-SE", {
+      .toLocaleTimeString("sv-SE", {
         timeZone: "Europe/Stockholm",
       });
   }
 
+  function formatDate(timestamp: string) {
+    return new Date(Number(timestamp) * 1000)
+      .toLocaleDateString("sv-SE", {
+        timeZone: "Europe/Stockholm",
+      });
+  }
+
+  // Divide the last hour into six 10-minute intervals
+  const now = Math.floor(Date.now() / 1000);
+
+  const activity = Array.from({ length: 6 }, (_, i) => {
+    const start = now - (6 - i) * 600;
+    const end = start + 600;
+
+    return {
+      label: formatTime(String(start)).slice(0, 5),
+      count: detections.filter((item) => {
+        const timestamp = Number(item.timestamp);
+        return timestamp >= start && timestamp < end;
+      }).length,
+    };
+  });
+
+  const maxCount = Math.max(
+    1,
+    ...activity.map((item) => item.count)
+  );
+
   return (
-    <main>
-      <h1>Telemetry Monitor</h1>
-      <p>AWS IoT Motion Monitoring System</p>
+    <main className="telemetry-page">
+      <header className="page-header">
+        <div>
+          <span className="eyebrow">AWS IoT PLATFORM</span>
+          <h1>Telemetry Monitor</h1>
+          <p>IoT Motion Monitoring System</p>
+        </div>
 
-      <button onClick={signOut}>Sign out</button>
+        <button onClick={signOut}>Sign out</button>
+      </header>
 
-      <hr />
-
-      <h2>Device: motion-01</h2>
+      <div className="device-header">
+        <h2>Device overview</h2>
+        <span className="device-tag">motion-01 · ESP32</span>
+      </div>
 
       {loading && <p>Loading telemetry...</p>}
-      {error && <p>{error}</p>}
+      {error && <p className="error-message">{error}</p>}
 
       <section className="dashboard">
         <div className="status-card">
-          <h3>Motion status</h3>
-          <h2 style={{
-            color: latest?.motion ? "#ef4444" : "#22c55e"
-          }}>
+          <h3>Latest sensor status</h3>
+          <h2 className={
+            !latest ? "unknown" :
+            latest.motion ? "motion" : "idle"
+          }>
             {!latest
               ? "Unknown"
               : latest.motion
@@ -106,49 +138,101 @@ function App() {
         </div>
 
         <div className="status-card">
-          <h3>Recent motion events</h3>
-          <h2>{motionEvents}</h2>
+          <h3>Recent detections</h3>
+          <h2 className="metric">{detections.length}</h2>
+          <small>Among latest 100 records</small>
         </div>
 
         <div className="status-card">
           <h3>Last detection</h3>
-          <h2>
+          <h2 className="metric">
             {lastMotion
               ? formatTime(lastMotion.timestamp)
               : "No data"}
           </h2>
+          <small>
+            {lastMotion
+              ? formatDate(lastMotion.timestamp)
+              : ""}
+          </small>
         </div>
       </section>
 
-      <h2>Recent activity</h2>
+      <section className="panel">
+        <h2>Motion activity</h2>
+        <p>Last 60 minutes · Latest available records</p>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Device</th>
-            <th>Timestamp</th>
-            <th>Status</th>
-          </tr>
-        </thead>
+        <div className="activity-chart">
+          {activity.map((item, index) => (
+            <div className="chart-column" key={index}>
+              <span>{item.count}</span>
 
-        <tbody>
-          {telemetry.map((item) => (
-            <tr key={item.timestamp}>
-              <td>{item.deviceName}</td>
-              <td>{formatTime(item.timestamp)}</td>
-              <td style={{
-                color: item.motion ? "#ef4444" : "#22c55e"
-              }}>
-                {item.motion
-                  ? "Motion detected"
-                  : "No motion"}
-              </td>
-            </tr>
+              <div className="bar-track">
+                <div
+                  className="chart-bar"
+                  style={{
+                    height: `${item.count / maxCount * 100}%`
+                  }}
+                />
+              </div>
+
+              <small>{item.label}</small>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      </section>
 
-      <p>Automatically refreshing every 5 seconds</p>
+      <section className="panel">
+        <h2>Event history</h2>
+        <p>{telemetry.length} records loaded</p>
+
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Device</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {telemetry.map((item) => (
+                <tr key={item.timestamp}>
+                  <td>{item.deviceName}</td>
+                  <td>{formatDate(item.timestamp)}</td>
+                  <td>{formatTime(item.timestamp)}</td>
+                  <td>
+                    <span className={
+                      item.motion
+                        ? "event-badge motion"
+                        : "event-badge idle"
+                    }>
+                      {item.motion
+                        ? "Motion detected"
+                        : "No motion"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer>
+        <span>Auto-refresh every 5 seconds</span>
+        <span>
+          Last updated: {
+            lastUpdated
+              ? lastUpdated.toLocaleTimeString("sv-SE", {
+                  timeZone: "Europe/Stockholm",
+                })
+              : "—"
+          }
+        </span>
+      </footer>
     </main>
   );
 }
