@@ -81,6 +81,8 @@ flowchart LR
 | VCC | VIN (5V) |
 | OUT | GPIO 27 |
 | GND | GND |
+<img width="1232" height="409" alt="ChatGPT Image Nov 26, 2026, 03_11_13 PM" src="https://github.com/user-attachments/assets/e87194de-ea79-40e2-9351-14875e677a48" />
+
 
 ## 4. Teknologier
 
@@ -173,6 +175,9 @@ Dashboarden visar:
 - Historik över sensorhändelser.
 
 Användaren behöver logga in via Amazon Cognito för att komma åt dashboarden
+<img width="1080" height="1920" alt="download" src="https://github.com/user-attachments/assets/605ab175-5784-495f-b6a7-8fc6f4bd9e19" />
+<img width="1030" height="1072" alt="image" src="https://github.com/user-attachments/assets/4be92835-41a0-4d21-b049-2f259129a396" />
+
 
 ## 8. Discord-integration
 
@@ -184,6 +189,7 @@ WHERE motion = true
 ```
 
 Lambda skickar en HTTPS POST-förfrågan till Discord via en Webhook. Notifikation innehåller enhetens identifierare samt datum och tid för rörelsedetektering.
+<img width="877" height="1097" alt="image" src="https://github.com/user-attachments/assets/d8a478ee-ca9e-4e3b-b3c7-d26380fcb6df" />
 
 ## 9. Säkerhet
 
