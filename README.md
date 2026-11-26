@@ -175,7 +175,6 @@ Dashboarden visar:
 - Historik över sensorhändelser.
 
 Användaren behöver logga in via Amazon Cognito för att komma åt dashboarden
-<img width="1080" height="1920" alt="download" src="https://github.com/user-attachments/assets/605ab175-5784-495f-b6a7-8fc6f4bd9e19" />
 <img width="1030" height="1072" alt="image" src="https://github.com/user-attachments/assets/4be92835-41a0-4d21-b049-2f259129a396" />
 
 
