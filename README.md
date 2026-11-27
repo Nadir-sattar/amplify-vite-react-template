@@ -19,16 +19,19 @@ Syftet med projektet är att demonstrera hur inbyggda system kan integreras med 
 
 ```mermaid
 flowchart TD
-  PIR["PIR HC-SR501"] -->|Digital signal| ESP["ESP32"]
+    PIR["PIR HC-SR501"] -->|Digital signal| ESP["ESP32"]
     ESP -->|MQTT / TLS| IOT["AWS IoT Core"]
+
     IOT --> R1["MotionTelemetryRule"]
     IOT --> R2["MotionDiscordRule"]
+
     R1 --> DB[("DynamoDB")]
+    DB <-->|Query| API["AWS AppSync"]
+    API <-->|GraphQL| WEB["React Dashboard / Amplify"]
+    WEB -.-|Authentication| COGNITO["Amazon Cognito"]
+
     R2 -->|Motion = true| LAMBDA["AWS Lambda"]
     LAMBDA -->|HTTPS POST| DISCORD["Discord Webhook"]
-    API["AWS AppSync"] <-->|Query| DB
-    WEB["React Dashboard / Amplify"] <-->|GraphQL| API
-    COGNITO["Amazon Cognito"] -->|Authentication| WEB
 
     style IOT fill:#b45309,color:#fff
     style LAMBDA fill:#b45309,color:#fff
