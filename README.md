@@ -24,6 +24,7 @@ flowchart TD
 
     IOT --> R1["MotionTelemetryRule"]
     IOT --> R2["MotionDiscordRule"]
+    IOT --> R3["MotionArchiveRule"]
 
     R1 --> DB[("DynamoDB")]
     DB <-->|Query| API["AWS AppSync"]
@@ -32,6 +33,8 @@ flowchart TD
 
     R2 -->|Motion = true| LAMBDA["AWS Lambda"]
     LAMBDA -->|HTTPS POST| DISCORD["Discord Webhook"]
+
+    R3 -->|JSON| S3["AmazonS3"]
 
     style IOT fill:#b45309,color:#fff
     style LAMBDA fill:#b45309,color:#fff
@@ -162,6 +165,13 @@ AWS IoT Core använder följande SQL-regel för att lagra inkommande sensordata:
 ``` sql
 SELECT * FROM 'motion-01/telemetry'
 ```
+
+Sedan används även Amazon S3 (Simple Storage device Service) som är en objektlagringstjänst som används för långtidslagring i form av filer. 
+
+Aws IoT Core använder regeln `MotionArchiveRule` för att spara inkommande sensordata som JSON-filer i en privat bucket.
+
+Till skillnad från DynamoDB, som används för datahämtning och visualisering i t.ex en webbsida som jag använder, så är S3 bra för arkivering och framtida analyser av telemetri.
+<img width="977" height="1007" alt="image" src="https://github.com/user-attachments/assets/568d7873-067e-4ec0-839e-edf6ad055adc" />
 
 ## 7. Dashboard
 
